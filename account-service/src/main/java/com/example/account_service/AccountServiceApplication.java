@@ -8,15 +8,28 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class AccountServiceApplication {
 
 	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+		Dotenv dotenv = Dotenv.configure()
+				.directory("account-service") // relative to root working dir
+				.ignoreIfMissing()
+				.load();
 
-		System.setProperty("DB_PORT", dotenv.get("DB_PORT"));
-		System.setProperty("DB_NAME", dotenv.get("DB_NAME"));
-		System.setProperty("DB_USER", dotenv.get("DB_USER"));
-		System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
-		System.setProperty("SERVER_PORT", dotenv.get("SERVER_PORT"));
+
+		setIfNotNull("DB_PORT", dotenv.get("DB_PORT"));
+		setIfNotNull("DB_NAME", dotenv.get("DB_NAME"));
+		setIfNotNull("DB_USER", dotenv.get("DB_USER"));
+		setIfNotNull("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+		setIfNotNull("SERVER_PORT", dotenv.get("SERVER_PORT"));
 
 		SpringApplication.run(AccountServiceApplication.class, args);
 	}
+
+	private static void setIfNotNull(String key, String value) {
+		if (value != null) {
+			System.setProperty(key, value);
+		} else {
+			System.out.println("⚠️ Warning: environment variable " + key + " is not set.");
+		}
+	}
+
 
 }
