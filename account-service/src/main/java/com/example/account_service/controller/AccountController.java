@@ -3,11 +3,13 @@ package com.example.account_service.controller;
 import com.example.account_service.dtos.AccountCreationRequest;
 import com.example.account_service.dtos.AccountCreationResponse;
 import com.example.account_service.dtos.AccountDetails;
+import com.example.account_service.dtos.TransferExecutionRequest;
 import com.example.account_service.models.Account;
 import com.example.account_service.services.AccountService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +40,14 @@ public class AccountController {
                 "Account created successfully.");
 
         return ResponseEntity.ok(accountCreationResponse);
+    }
+
+    @PutMapping("/accounts/transfer")
+    public ResponseEntity<Map<String, String>> transferMoney(@RequestBody TransferExecutionRequest tr){
+        this.accountService.transferMoney(tr);
+
+        Map<String, String> response = Map.of("message", "Transfer successful!");
+        return ResponseEntity.ok(response);
     }
 
 

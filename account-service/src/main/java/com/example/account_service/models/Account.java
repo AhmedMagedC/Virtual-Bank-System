@@ -39,7 +39,6 @@ public class Account {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime updatedAt;
 

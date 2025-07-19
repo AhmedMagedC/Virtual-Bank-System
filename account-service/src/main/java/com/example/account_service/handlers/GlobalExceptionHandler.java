@@ -1,6 +1,7 @@
 package com.example.account_service.handlers;
 
 import com.example.account_service.dtos.ErrorDetails;
+import com.example.account_service.exceptions.InvalidTransferException;
 import com.example.account_service.exceptions.NotFoundException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import java.util.Arrays;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorDetails> handleAccountNotFound(NotFoundException ex) {
+    public ResponseEntity<ErrorDetails> handleNotFound(NotFoundException ex) {
         ErrorDetails errorDetails = new ErrorDetails(404, "Not Found", ex.getMessage());
         return ResponseEntity.status(404).body(errorDetails);
     }
@@ -66,5 +67,11 @@ public class GlobalExceptionHandler {
         ErrorDetails errorDetails = new ErrorDetails(400,"Bad Request","Invalid request body: " + ex.getMessage());
         return ResponseEntity.badRequest()
                 .body(errorDetails);
+    }
+
+    @ExceptionHandler(InvalidTransferException.class)
+    public ResponseEntity<ErrorDetails> handleInvalidTransfer(InvalidTransferException ex) {
+        ErrorDetails errorDetails = new ErrorDetails(400, "Bad Request", ex.getMessage());
+        return ResponseEntity.status(400).body(errorDetails);
     }
 }
