@@ -1,7 +1,7 @@
 package com.example.account_service.handlers;
 
 import com.example.account_service.dtos.ErrorDetails;
-import com.example.account_service.exceptions.InvalidTransferException;
+import com.example.account_service.exceptions.BadRequest;
 import com.example.account_service.exceptions.NotFoundException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.ResponseEntity;
@@ -69,8 +69,8 @@ public class GlobalExceptionHandler {
                 .body(errorDetails);
     }
 
-    @ExceptionHandler(InvalidTransferException.class)
-    public ResponseEntity<ErrorDetails> handleInvalidTransfer(InvalidTransferException ex) {
+    @ExceptionHandler(BadRequest.class)
+    public ResponseEntity<ErrorDetails> handleBadRequest(BadRequest ex) {
         ErrorDetails errorDetails = new ErrorDetails(400, "Bad Request", ex.getMessage());
         return ResponseEntity.status(400).body(errorDetails);
     }

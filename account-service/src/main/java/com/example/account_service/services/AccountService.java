@@ -2,7 +2,7 @@ package com.example.account_service.services;
 
 import com.example.account_service.dtos.AccountCreationRequest;
 import com.example.account_service.dtos.TransferExecutionRequest;
-import com.example.account_service.exceptions.InvalidTransferException;
+import com.example.account_service.exceptions.BadRequest;
 import com.example.account_service.exceptions.NotFoundException;
 import com.example.account_service.models.Account;
 import com.example.account_service.repositories.AccountRepository;
@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -34,6 +35,10 @@ public class AccountService {
 
     public Account createAccount(AccountCreationRequest acc){
         validateUserExists(acc.userId());
+
+        if(acc.initialBalance().signum() < 0){
+            throw new BadRequest("InitialBalance has to be positive");
+        }
 
         Account newAcc = new Account();
         newAcc.setAccountNumber(this.accountRepository.getNextAccountNumberValue());
@@ -56,7 +61,7 @@ public class AccountService {
         Account toAccount =  this.accountRepository.findById(tr.toAccountId()).get();
 
         if(fromAccount.getBalance().compareTo(tr.amount()) < 0) {
-            throw new InvalidTransferException("Invalid transfer request!");
+            throw new BadRequest("Invalid transfer request!");
         }
 
         fromAccount.setBalance(fromAccount.getBalance().subtract(tr.amount()));
@@ -68,6 +73,10 @@ public class AccountService {
         this.accountRepository.save(fromAccount);
         this.accountRepository.save(toAccount);
 
+    }
+
+    public List<Account> getListOfAccounts(UUID userId){
+        return this.accountRepository.findByUserId(userId);
     }
 
     private void validateUserExists(UUID userId) {
