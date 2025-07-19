@@ -1,5 +1,7 @@
 package com.example.account_service.controller;
 
+import com.example.account_service.dtos.AccountCreationRequest;
+import com.example.account_service.dtos.AccountCreationResponse;
 import com.example.account_service.dtos.AccountDetails;
 import com.example.account_service.models.Account;
 import com.example.account_service.services.AccountService;
@@ -26,5 +28,17 @@ public class AccountController {
 
         return ResponseEntity.ok(accountDetails);
     }
+
+    @PostMapping("/accounts")
+    public ResponseEntity<AccountCreationResponse> createAccount(@RequestBody AccountCreationRequest acc) {
+        Account account = this.accountService.createAccount(acc);
+
+        AccountCreationResponse accountCreationResponse = new AccountCreationResponse(account.getId(),
+                account.getAccountNumber(),
+                "Account created successfully.");
+
+        return ResponseEntity.ok(accountCreationResponse);
+    }
+
 
 }
