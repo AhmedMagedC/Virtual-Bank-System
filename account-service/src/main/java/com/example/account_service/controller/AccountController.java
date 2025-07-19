@@ -4,11 +4,13 @@ import com.example.account_service.dtos.AccountCreationRequest;
 import com.example.account_service.dtos.AccountCreationResponse;
 import com.example.account_service.dtos.AccountDetails;
 import com.example.account_service.dtos.TransferExecutionRequest;
+import com.example.account_service.exceptions.NotFoundException;
 import com.example.account_service.models.Account;
 import com.example.account_service.services.AccountService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,6 +31,27 @@ public class AccountController {
                 account.getStatus());
 
         return ResponseEntity.ok(accountDetails);
+    }
+
+    @GetMapping("/users/{userId}/accounts")
+    public ResponseEntity<List<AccountDetails>> getUserAccounts(@PathVariable("userId") UUID userId){
+        List<Account> accounts = accountService.getListOfAccounts(userId);
+
+        List<AccountDetails> details = accounts.stream()
+                .map(account -> new AccountDetails(
+                        account.getId(),
+                        account.getAccountNumber(),
+                        account.getBalance(),
+                        account.getAccountType(),
+                        account.getStatus()
+                ))
+                .toList();
+
+        if(details.isEmpty()){
+            throw new NotFoundException("No Accounts Found for userId: " + userId);
+        }
+
+        return ResponseEntity.ok(details);
     }
 
     @PostMapping("/accounts")
