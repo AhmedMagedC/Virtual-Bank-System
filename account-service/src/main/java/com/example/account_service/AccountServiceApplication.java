@@ -3,13 +3,14 @@ package com.example.account_service;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootApplication
 public class AccountServiceApplication {
 
 	public static void main(String[] args) {
 		Dotenv dotenv = Dotenv.configure()
-				.directory("account-service") // relative to root working dir
 				.ignoreIfMissing()
 				.load();
 
@@ -29,6 +30,11 @@ public class AccountServiceApplication {
 		} else {
 			System.out.println("⚠️ Warning: environment variable " + key + " is not set.");
 		}
+	}
+
+	@Bean
+	public WebClient.Builder webClientBuilder() {
+		return WebClient.builder();
 	}
 
 

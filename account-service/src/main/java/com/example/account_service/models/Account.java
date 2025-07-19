@@ -30,18 +30,15 @@ public class Account {
     private AccountType accountType;
 
     @Column(precision = 15, scale = 2)
-    @ColumnDefault("0.00")
-    private BigDecimal balance;
+    private BigDecimal balance = BigDecimal.valueOf(0.00);
 
-    @ColumnDefault("'ACTIVE'")
     @Enumerated(EnumType.STRING)
-    private AccountStatus status;
+    private AccountStatus status = AccountStatus.ACTIVE;
 
     @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime updatedAt;
 
