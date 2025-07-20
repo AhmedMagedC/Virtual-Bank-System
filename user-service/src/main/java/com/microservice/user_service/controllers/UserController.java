@@ -69,17 +69,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{userId}/profile", method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> getProfile(@PathVariable("userId")UUID id,
-                                                          @RequestHeader Map<String, String>
-                                                                  headers){
-
-        if (!headers.containsKey("authorization") && !headers.containsKey("authentication")) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("message","missing headers");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(error);
-        }
-
+    public ResponseEntity<Map<String, Object>> getProfile(@PathVariable("userId")UUID id){
         UserObj user = userService.getProfile(id);
 
         //return custom response
