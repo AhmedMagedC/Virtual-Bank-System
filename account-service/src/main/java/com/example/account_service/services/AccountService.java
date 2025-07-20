@@ -1,7 +1,9 @@
 package com.example.account_service.services;
 
 import com.example.account_service.dtos.AccountCreationRequest;
+import com.example.account_service.dtos.TransactionDetails;
 import com.example.account_service.dtos.TransferExecutionRequest;
+import com.example.account_service.enums.AccountStatus;
 import com.example.account_service.exceptions.BadRequest;
 import com.example.account_service.exceptions.NotFoundException;
 import com.example.account_service.models.Account;
@@ -13,9 +15,9 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AccountService {
@@ -24,19 +26,19 @@ public class AccountService {
     private final WebClient.Builder webClientBuilder;
 
     public AccountService(AccountRepository accountRepository, WebClient.Builder webClientBuilder) {
-        this.accountRepository=accountRepository;
-        this.webClientBuilder=webClientBuilder;
+        this.accountRepository = accountRepository;
+        this.webClientBuilder = webClientBuilder;
     }
 
-    public Account getDetails(UUID id){
+    public Account getDetails(UUID id) {
         return accountRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Account with ID: " + id + " " + "not found!"));
     }
 
-    public Account createAccount(AccountCreationRequest acc){
+    public Account createAccount(AccountCreationRequest acc) {
         validateUserExists(acc.userId());
 
-        if(acc.initialBalance().signum() < 0){
+        if (acc.initialBalance().signum() < 0) {
             throw new BadRequest("InitialBalance has to be positive");
         }
 
@@ -49,18 +51,18 @@ public class AccountService {
         return this.accountRepository.save(newAcc);
     }
 
-    public void transferMoney(TransferExecutionRequest tr){
+    public void transferMoney(TransferExecutionRequest tr) {
         boolean fromAccountExist = this.accountRepository.findById(tr.fromAccountId()).isPresent();
         boolean toAccountExist = this.accountRepository.findById(tr.toAccountId()).isPresent();
 
-        if(!fromAccountExist || !toAccountExist) {
+        if (!fromAccountExist || !toAccountExist) {
             throw new NotFoundException("Invalid Account!");
         }
 
-        Account fromAccount =  this.accountRepository.findById(tr.fromAccountId()).get();
-        Account toAccount =  this.accountRepository.findById(tr.toAccountId()).get();
+        Account fromAccount = this.accountRepository.findById(tr.fromAccountId()).get();
+        Account toAccount = this.accountRepository.findById(tr.toAccountId()).get();
 
-        if(fromAccount.getBalance().compareTo(tr.amount()) < 0) {
+        if (fromAccount.getBalance().compareTo(tr.amount()) < 0) {
             throw new BadRequest("Invalid transfer request!");
         }
 
@@ -75,7 +77,7 @@ public class AccountService {
 
     }
 
-    public List<Account> getListOfAccounts(UUID userId){
+    public List<Account> getListOfAccounts(UUID userId) {
         return this.accountRepository.findByUserId(userId);
     }
 
@@ -83,7 +85,7 @@ public class AccountService {
         try {
             webClientBuilder.build()
                     .get()
-                    .uri("http://localhost:8080/users/{userId}/profile", userId)
+                    .uri("http://localhost:8082/users/{userId}/profile", userId)
                     .retrieve()
                     .onStatus(HttpStatus.NOT_FOUND::equals, response ->
                             Mono.error(new NotFoundException("User with ID " + userId + " not found."))
@@ -97,5 +99,48 @@ public class AccountService {
         }
     }
 
+    public void inactivateIdleAccounts() {
+        List<Account> activeAccounts = accountRepository.findByStatus(AccountStatus.ACTIVE);
+
+        for (Account account : activeAccounts) {
+
+            List<TransactionDetails> transactions = fetchTransactions(account.getId());
+
+            // Get latest timestamp
+            Optional<LocalDateTime> latestTimestampOpt = transactions.stream()
+                    .map(TransactionDetails::timestamp)
+                    .max(Comparator.naturalOrder());
+
+            if (latestTimestampOpt.isPresent()) {
+                LocalDateTime latest = latestTimestampOpt.get();
+                if (Duration.between(latest, LocalDateTime.now()).toHours() >= 24) {
+                    account.setStatus(AccountStatus.INACTIVE);
+                    accountRepository.save(account);
+                }
+            } else {
+                // No transactions at all → also mark as INACTIVE
+                account.setStatus(AccountStatus.INACTIVE);
+                accountRepository.save(account);
+            }
+
+
+        }
+
+    }
+
+    private List<TransactionDetails> fetchTransactions(UUID accountId) {
+        return webClientBuilder.build()
+                .get()
+                .uri("http://localhost:8083/accounts/{accountId}/transactions", accountId)
+                .retrieve()
+                .onStatus(HttpStatus.NOT_FOUND::equals, response -> {
+                    // Return an empty list on 404 error
+                    return Mono.error(new NotFoundException(""));
+                })
+                .bodyToFlux(TransactionDetails.class)
+                .collectList()
+                .onErrorResume(NotFoundException.class, e -> Mono.just(Collections.emptyList()))
+                .block();
+    }
 
 }
