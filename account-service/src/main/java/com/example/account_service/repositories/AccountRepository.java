@@ -1,5 +1,6 @@
 package com.example.account_service.repositories;
 
+import com.example.account_service.enums.AccountStatus;
 import com.example.account_service.models.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,4 +13,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     String getNextAccountNumberValue();
 
     List<Account> findByUserId(UUID userId);
+
+    List<Account> findByStatus(AccountStatus status);
 }
