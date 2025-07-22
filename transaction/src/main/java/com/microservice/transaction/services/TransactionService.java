@@ -7,13 +7,12 @@ import com.microservice.transaction.exceptions.BadRequestException;
 import com.microservice.transaction.exceptions.NotFoundException;
 import com.microservice.transaction.models.Transactions;
 import jakarta.transaction.Transactional;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.zone.ZoneRulesProvider;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -61,6 +60,10 @@ public class TransactionService {
         Transactions transaction = transactionDao.findById(transferReq.getTransactionId())
                 .orElseThrow(() -> new BadRequestException("Transaction not found"));
 
+        if (transaction.getStatus() != TransactionStatus.INITIATED){
+            throw new BadRequestException("Transaction already Executed.");
+        }
+
         TransactionInternalRequest transactionInternalRequest= new TransactionInternalRequest(
                 transaction.getFromAccountId(), transaction.getToAccountId(),
                 transaction.getAmount());
@@ -76,6 +79,7 @@ public class TransactionService {
         }
 
         transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setTimestamp(LocalDateTime.now());
         transactionDao.saveAndFlush(transaction);
 
         return new TransferResponse(transaction.getId(),transaction.getStatus(),
@@ -94,8 +98,10 @@ public class TransactionService {
 
         List<TransactionDetail> transactionsList = new ArrayList<>();
 
+
         // Outgoing (sent) transactions - amount should be negative
-        List<Transactions> fromTransactions = transactionDao.findAllByFromAccountId(accountId);
+        List<Transactions> fromTransactions = transactionDao.findByFromAccountIdAndStatusIn(
+                accountId, List.of(TransactionStatus.SUCCESS ));
         fromTransactions.forEach(transaction -> {
             transactionsList.add(new TransactionDetail(
                     transaction.getId(),
@@ -107,7 +113,8 @@ public class TransactionService {
         });
 
         // Incoming (received) transactions - amount remains positive
-        List<Transactions> toTransactions = transactionDao.findAllByToAccountId(accountId);
+        List<Transactions> toTransactions = transactionDao.findByToAccountIdAndStatusIn(accountId,
+                List.of(TransactionStatus.SUCCESS ));
         toTransactions.forEach(transaction -> {
             transactionsList.add(new TransactionDetail(
                     transaction.getId(),
