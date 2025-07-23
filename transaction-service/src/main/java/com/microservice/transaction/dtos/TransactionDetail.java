@@ -6,15 +6,18 @@ import java.util.UUID;
 
 public class TransactionDetail {
     private UUID transactionId;
-    private UUID accountId;
+    private UUID fromAccountId;
+    private UUID toAccountId;
     private BigDecimal amount;
     private String description;
     private LocalDateTime timestamp;
 
     public TransactionDetail(){}
-    public TransactionDetail(UUID transactionId, UUID accountId, BigDecimal amount, String description, LocalDateTime timestamp) {
+
+    public TransactionDetail(UUID transactionId, UUID fromAccountId, UUID toAccountId, BigDecimal amount, String description, LocalDateTime timestamp) {
         this.transactionId = transactionId;
-        this.accountId = accountId;
+        this.fromAccountId = fromAccountId;
+        this.toAccountId = toAccountId;
         this.amount = amount;
         this.description = description;
         this.timestamp = timestamp;
@@ -28,12 +31,20 @@ public class TransactionDetail {
         this.transactionId = transactionId;
     }
 
-    public UUID getAccountId() {
-        return accountId;
+    public UUID getFromAccountId() {
+        return fromAccountId;
     }
 
-    public void setAccountId(UUID accountId) {
-        this.accountId = accountId;
+    public void setFromAccountId(UUID fromAccountId) {
+        this.fromAccountId = fromAccountId;
+    }
+
+    public UUID getToAccountId() {
+        return toAccountId;
+    }
+
+    public void setToAccountId(UUID toAccountId) {
+        this.toAccountId = toAccountId;
     }
 
     public BigDecimal getAmount() {
