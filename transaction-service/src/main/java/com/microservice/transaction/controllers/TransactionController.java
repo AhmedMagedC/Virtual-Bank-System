@@ -4,6 +4,7 @@ import com.microservice.transaction.dtos.TransactionDetail;
 import com.microservice.transaction.dtos.TransferRequestExecution;
 import com.microservice.transaction.dtos.TransferRequestInitiation;
 import com.microservice.transaction.dtos.TransferResponse;
+import com.microservice.transaction.enums.MsgType;
 import com.microservice.transaction.exceptions.BadRequestException;
 import com.microservice.transaction.models.Transactions;
 import com.microservice.transaction.services.TransactionService;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,26 +26,38 @@ public class TransactionController {
     private TransactionService transactionService;
 
     @RequestMapping(method = RequestMethod.POST, value = "/transactions/transfer/initiation")
-    public TransferResponse initiateTransaction(@Valid @RequestBody TransferRequestInitiation transferReq) {
-            return transactionService.initiateTransaction(transferReq);
+    public TransferResponse initiateTransaction(
+            @Valid @RequestBody TransferRequestInitiation transferReq) {
+
+        transactionService.sendLog(transferReq, MsgType.REQUEST, LocalDateTime.now());
+
+        TransferResponse res = transactionService.initiateTransaction(transferReq);
+
+        transactionService.sendLog(res, MsgType.RESPONSE, LocalDateTime.now());
+        return res;
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/transactions/transfer/execution")
-    public TransferResponse executeTransaction(@Valid @RequestBody TransferRequestExecution transferReq) {
-        return transactionService.executeTransaction(transferReq);
+    public TransferResponse executeTransaction(
+            @Valid @RequestBody TransferRequestExecution transferReq) {
+
+        transactionService.sendLog(transferReq, MsgType.REQUEST, LocalDateTime.now());
+
+        TransferResponse res = transactionService.executeTransaction(transferReq);
+
+        transactionService.sendLog(res, MsgType.RESPONSE, LocalDateTime.now());
+        return res;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/accounts/{accountId}/transactions")
     public List<TransactionDetail> getAccountTransactions(@PathVariable("accountId")
                                                           UUID accountId){
-//        try {
-//            return transactionService.getAccountTransactions(accountId);
-//        }catch (RuntimeException ex)
-//        {
-//            ex.fillInStackTrace();
-//            System.out.println(ex.getMessage());
-//        }
-        return transactionService.getAccountTransactions(accountId);
+        transactionService.sendLog(accountId, MsgType.REQUEST, LocalDateTime.now());
+
+        List<TransactionDetail> resList = transactionService.getAccountTransactions(accountId);
+
+        transactionService.sendLog(resList, MsgType.RESPONSE, LocalDateTime.now());
+        return resList;
     }
 
 

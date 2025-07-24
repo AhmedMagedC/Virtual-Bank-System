@@ -1,8 +1,12 @@
 package com.microservice.user.service.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microservice.user.service.constant.AppConst;
 import com.microservice.user.service.dao.UserDao;
 
 import com.microservice.user.service.dtos.*;
+import com.microservice.user.service.enums.MsgType;
 import com.microservice.user.service.exceptions.InvalidUsernameOrPassword;
 import com.microservice.user.service.exceptions.UserAlreadyExistsException;
 import com.microservice.user.service.exceptions.UserNotFound;
@@ -10,8 +14,11 @@ import com.microservice.user.service.models.Users;
 import jakarta.transaction.Transactional;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +28,23 @@ public class UserService {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private KafkaTemplate<String,Object> kafkaTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
+    public void sendLog(Object msg , MsgType type, LocalDateTime date){
+        try{
+            String jsonLog = objectMapper.writeValueAsString(msg);
+            Logs newLog = new Logs(jsonLog,type,date);
+            kafkaTemplate.send(AppConst.LOGGING, newLog);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); // or log the error
+        }
+    }
 
     private Users mapUserRegistrationToUserObj(UserRegistration userData) {
         Users user = new Users();

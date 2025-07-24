@@ -1,7 +1,11 @@
 package com.microservice.transaction.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microservice.transaction.constant.AppConst;
 import com.microservice.transaction.dao.TransactionDao;
 import com.microservice.transaction.dtos.*;
+import com.microservice.transaction.enums.MsgType;
 import com.microservice.transaction.enums.TransactionStatus;
 import com.microservice.transaction.exceptions.BadRequestException;
 import com.microservice.transaction.exceptions.NotFoundException;
@@ -9,10 +13,12 @@ import com.microservice.transaction.models.Transactions;
 import jakarta.transaction.Transactional;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.time.zone.ZoneRulesProvider;
 import java.util.*;
 
@@ -24,6 +30,24 @@ public class TransactionService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private KafkaTemplate<String,Object> kafkaTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
+    public void sendLog(Object msg , MsgType type, LocalDateTime date){
+        try{
+            String jsonLog = objectMapper.writeValueAsString(msg);
+            Logs newLog = new Logs(jsonLog,type,date);
+            kafkaTemplate.send(AppConst.LOGGING, newLog);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); // or log the error
+        }
+    }
+
 
 
     @Transactional
