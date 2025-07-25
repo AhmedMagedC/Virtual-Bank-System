@@ -1,14 +1,20 @@
 package com.example.account_service.services;
 
+import com.example.account_service.constants.AppConst;
 import com.example.account_service.dtos.AccountCreationRequest;
+import com.example.account_service.dtos.Logs;
 import com.example.account_service.dtos.TransactionDetails;
 import com.example.account_service.dtos.TransferExecutionRequest;
 import com.example.account_service.enums.AccountStatus;
+import com.example.account_service.enums.MsgType;
 import com.example.account_service.exceptions.BadRequest;
 import com.example.account_service.exceptions.NotFoundException;
 import com.example.account_service.models.Account;
 import com.example.account_service.repositories.AccountRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -24,10 +30,17 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final WebClient.Builder webClientBuilder;
+    private final KafkaTemplate<String,Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    public AccountService(AccountRepository accountRepository, WebClient.Builder webClientBuilder) {
+    public AccountService(AccountRepository accountRepository,
+                          WebClient.Builder webClientBuilder,
+                          KafkaTemplate<String,Object> kafkaTemplate,
+                          ObjectMapper objectMapper) {
         this.accountRepository = accountRepository;
         this.webClientBuilder = webClientBuilder;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Account getDetails(UUID id) {
@@ -141,6 +154,16 @@ public class AccountService {
                 .collectList()
                 .onErrorResume(NotFoundException.class, e -> Mono.just(Collections.emptyList()))
                 .block();
+    }
+
+    public void sendLog(Object msg , MsgType type, LocalDateTime date){
+        try{
+            String jsonLog = objectMapper.writeValueAsString(msg);
+            Logs newLog = new Logs(jsonLog,type,date);
+            kafkaTemplate.send(AppConst.LOGGING, newLog);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); // or log the error
+        }
     }
 
 }
