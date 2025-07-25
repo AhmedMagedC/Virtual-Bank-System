@@ -32,7 +32,7 @@ public class Transactions {
     @Column(nullable = true,  columnDefinition = "VARCHAR(255)")
     private String description;
 
-    @Column(updatable = false)
+    @Column
     @CreationTimestamp
     private LocalDateTime timestamp;
 
