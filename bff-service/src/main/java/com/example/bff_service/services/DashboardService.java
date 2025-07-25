@@ -1,16 +1,21 @@
 package com.example.bff_service.services;
 
+import com.example.bff_service.constants.AppConst;
 import com.example.bff_service.dtos.*;
+import com.example.bff_service.enums.MsgType;
 import com.example.bff_service.exceptions.DownstreamServiceException;
 import com.example.bff_service.exceptions.ResourceNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,11 +25,18 @@ public class DashboardService {
     private final WebClient userServiceClient;
     private final WebClient accountServiceClient;
     private final WebClient transactionServiceClient;
+    private final KafkaTemplate<String,Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    public DashboardService(@Autowired WebClient.Builder webClientBuilder) {
+
+    public DashboardService(WebClient.Builder webClientBuilder,
+                            KafkaTemplate<String,Object> kafkaTemplate,
+                            ObjectMapper objectMapper) {
         this.userServiceClient = webClientBuilder.baseUrl("http://localhost:8082").build();
         this.accountServiceClient = webClientBuilder.baseUrl("http://localhost:8081").build();
         this.transactionServiceClient = webClientBuilder.baseUrl("http://localhost:8083").build();
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Mono<DashboardResponse> getDashboard(UUID userId) {
@@ -106,6 +118,16 @@ public class DashboardService {
                             return awt;
                         }))
                 .collectList();
+    }
+
+    public void sendLog(Object msg , MsgType type, LocalDateTime date){
+        try{
+            String jsonLog = objectMapper.writeValueAsString(msg);
+            Logs newLog = new Logs(jsonLog, type, date);
+            kafkaTemplate.send(AppConst.LOGGING, newLog);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); // or log the error
+        }
     }
 }
 
