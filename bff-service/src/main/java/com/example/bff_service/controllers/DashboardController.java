@@ -32,13 +32,13 @@ public class DashboardController {
 
         this.dashboardService.sendLog(reqLog, MsgType.REQUEST, LocalDateTime.now());
 
-        Mono<DashboardResponse> dashboardResponseMono = dashboardService.getDashboard(userId);
-
-        this.dashboardService.sendLog(dashboardResponseMono, MsgType.RESPONSE, LocalDateTime.now());
-
-        return dashboardResponseMono
-                .map(ResponseEntity::ok)
+        return dashboardService.getDashboard(userId)
+                .map(response -> {
+                    this.dashboardService.sendLog(response, MsgType.RESPONSE, LocalDateTime.now());
+                    return ResponseEntity.ok(response);
+                })
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
+
 }
 
