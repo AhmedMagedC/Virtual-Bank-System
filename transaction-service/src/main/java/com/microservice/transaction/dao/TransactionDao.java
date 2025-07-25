@@ -1,5 +1,6 @@
 package com.microservice.transaction.dao;
 
+import com.microservice.transaction.enums.TransactionStatus;
 import com.microservice.transaction.models.Transactions;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,5 +11,10 @@ public interface TransactionDao extends JpaRepository<Transactions, UUID> {
 
     List<Transactions> findAllByFromAccountId(UUID fromAccountId);
     List<Transactions> findAllByToAccountId(UUID toAccountId);
+    List<Transactions> findByFromAccountIdAndStatusIn(UUID fromAccountId,
+                                                      List<TransactionStatus> statuses);
+
+    List<Transactions> findByToAccountIdAndStatusIn(UUID accountId,
+                                                    List<TransactionStatus> success);
 
 }
