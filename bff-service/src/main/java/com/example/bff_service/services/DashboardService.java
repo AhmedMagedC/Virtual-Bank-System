@@ -32,9 +32,9 @@ public class DashboardService {
     public DashboardService(WebClient.Builder webClientBuilder,
                             KafkaTemplate<String,Object> kafkaTemplate,
                             ObjectMapper objectMapper) {
-        this.userServiceClient = webClientBuilder.baseUrl("http://localhost:8082").build();
-        this.accountServiceClient = webClientBuilder.baseUrl("http://localhost:8081").build();
-        this.transactionServiceClient = webClientBuilder.baseUrl("http://localhost:8083").build();
+        this.userServiceClient = webClientBuilder.baseUrl("http://user-service:8082").build();
+        this.accountServiceClient = webClientBuilder.baseUrl("http://account-service:8081").build();
+        this.transactionServiceClient = webClientBuilder.baseUrl("http://transaction-service:8083").build();
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
     }
