@@ -98,7 +98,7 @@ public class AccountService {
         try {
             webClientBuilder.build()
                     .get()
-                    .uri("http://localhost:8082/users/{userId}/profile", userId)
+                    .uri("http://user-service:8082/users/{userId}/profile", userId)
                     .retrieve()
                     .onStatus(HttpStatus.NOT_FOUND::equals, response ->
                             Mono.error(new NotFoundException("User with ID " + userId + " not found."))
@@ -144,7 +144,7 @@ public class AccountService {
     private List<TransactionDetails> fetchTransactions(UUID accountId) {
         return webClientBuilder.build()
                 .get()
-                .uri("http://localhost:8083/accounts/{accountId}/transactions", accountId)
+                .uri("http://transaction-service:8083/accounts/{accountId}/transactions", accountId)
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, response -> {
                     // Return an empty list on 404 error
