@@ -58,10 +58,10 @@ public class TransactionService {
         //check if valid account ids
         try {
             fromAccount = restTemplate.getForObject(
-                    "http://account-service:8081/accounts/" + newTransaction.getFromAccountId(),
+                    "http://localhost:8081/accounts/" + newTransaction.getFromAccountId(),
                     AccountDetail.class);
             AccountDetail toAccount = restTemplate.getForObject(
-                    "http://account-service:8081/accounts/" + newTransaction.getToAccountId(),
+                    "http://localhost:8081/accounts/" + newTransaction.getToAccountId(),
                     AccountDetail.class);
         }catch (HttpClientErrorException ex){
             sendLog("Invalid 'from' or 'to' account ID.", MsgType.RESPONSE, LocalDateTime.now());
@@ -101,7 +101,7 @@ public class TransactionService {
                 transaction.getAmount());
 
         try {
-            restTemplate.put("http://account-service:8081/accounts/transfer",
+            restTemplate.put("http://localhost:8081/accounts/transfer",
                     transactionInternalRequest);
 
         }catch (HttpClientErrorException ex){
@@ -124,7 +124,7 @@ public class TransactionService {
     public List<TransactionDetail> getAccountTransactions(UUID accountId) {
         //check for valid account id
         try {
-            restTemplate.getForObject("http://account-service:8081/accounts/" + accountId,
+            restTemplate.getForObject("http://localhost:8081/accounts/" + accountId,
                     AccountDetail.class);
         }catch (HttpClientErrorException ex){
             String errorMsg = "Invalid account ID.";
