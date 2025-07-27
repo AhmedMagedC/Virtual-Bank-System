@@ -31,7 +31,10 @@ public class UserController {
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<UserResponse> registerNewUser(
-            @Validated @RequestBody UserRegistration user) {
+            @Validated @RequestBody UserRegistration user,
+            @RequestHeader("APP-NAME") String appName) {
+        //testing WSO2 header
+        System.out.println("app name header is "+appName);
 
         UserRegistration logUser = new UserRegistration(user.getUsername(),
                 BCrypt.hashpw(user.getPassword(),BCrypt.gensalt(12)),
@@ -45,7 +48,10 @@ public class UserController {
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public ResponseEntity<LoginResponse> login(@Validated @RequestBody UserLogin credentials) {
+    public ResponseEntity<LoginResponse> login(@Validated @RequestBody UserLogin credentials
+            , @RequestHeader("APP-NAME") String appName) {
+        //testing WSO2 header
+        System.out.println("app name header is "+appName);
 
         UserLogin logUser = new UserLogin(credentials.getUsername(),
                 BCrypt.hashpw(credentials.getPassword(),BCrypt.gensalt(12)));
