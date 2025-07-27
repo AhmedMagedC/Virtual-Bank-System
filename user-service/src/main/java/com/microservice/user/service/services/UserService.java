@@ -29,23 +29,6 @@ public class UserService {
     @Autowired
     private UserDao userDao;
 
-    @Autowired
-    private KafkaTemplate<String,Object> kafkaTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-
-    public void sendLog(Object msg , MsgType type, LocalDateTime date){
-        try{
-            String jsonLog = objectMapper.writeValueAsString(msg);
-            Logs newLog = new Logs(jsonLog,type,date);
-            kafkaTemplate.send(AppConst.LOGGING, newLog);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace(); // or log the error
-        }
-    }
-
     private Users mapUserRegistrationToUserObj(UserRegistration userData) {
         Users user = new Users();
         user.setUsername(userData.getUsername());
@@ -63,7 +46,6 @@ public class UserService {
         if (userDao.existsByUsername(newUser.getUsername()) ||
                 userDao.existsByEmail(newUser.getEmail())){
             String errorMsg = "Username or email already exists.";
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
             throw new UserAlreadyExistsException(errorMsg);
         }
 
@@ -85,8 +67,7 @@ public class UserService {
 
         //check if user exists
         if ((!username.isEmpty() && !userDao.existsByUsername(username))) {
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new UserNotFound("Invalid username or password.");
+             throw new UserNotFound("Invalid username or password.");
         }
 
         Users userLogged = userDao.findByUsername(username);
@@ -96,8 +77,7 @@ public class UserService {
             return new LoginResponse(userLogged.getId(), userLogged.getUsername());
         }
         else {
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new InvalidUsernameOrPassword(errorMsg);
+             throw new InvalidUsernameOrPassword(errorMsg);
         }
     }
 
@@ -105,8 +85,7 @@ public class UserService {
     public UserProfile getProfile(UUID id){
         if(!userDao.existsById(id)){
             String errorMsg = "User with ID "+ id + " not found.";
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new UserNotFound(errorMsg);
+             throw new UserNotFound(errorMsg);
         }
         Users user = userDao.findById(id).get();
         return new UserProfile(user.getId(),user.getUsername(), user.getEmail(),

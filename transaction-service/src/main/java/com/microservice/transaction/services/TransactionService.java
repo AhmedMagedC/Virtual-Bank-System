@@ -25,27 +25,8 @@ public class TransactionService {
 
     @Autowired
     private TransactionDao transactionDao;
-
     @Autowired
     private RestTemplate restTemplate;
-
-    @Autowired
-    private KafkaTemplate<String,Object> kafkaTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-
-    public void sendLog(Object msg , MsgType type, LocalDateTime date){
-        try{
-            String jsonLog = objectMapper.writeValueAsString(msg);
-            Logs newLog = new Logs(jsonLog,type,date);
-            kafkaTemplate.send(AppConst.LOGGING, newLog);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-    }
-
 
 
     @Transactional
@@ -64,14 +45,12 @@ public class TransactionService {
                     "http://localhost:8081/accounts/" + newTransaction.getToAccountId(),
                     AccountDetail.class);
         }catch (HttpClientErrorException ex){
-            sendLog("Invalid 'from' or 'to' account ID.", MsgType.RESPONSE, LocalDateTime.now());
-            throw new BadRequestException("Invalid 'from' or 'to' account ID.");
+             throw new BadRequestException("Invalid 'from' or 'to' account ID.");
         }
 
         //check valid balance
         if (fromAccount.getBalance().compareTo(newTransaction.getAmount()) < 0){
-            sendLog("Insufficient funds.", MsgType.RESPONSE, LocalDateTime.now());
-            throw new BadRequestException("Insufficient funds.");
+             throw new BadRequestException("Insufficient funds.");
         }
 
 
@@ -84,15 +63,13 @@ public class TransactionService {
     public TransferResponse executeTransaction(TransferRequestExecution transferReq) {
         Transactions transaction = transactionDao.findById(transferReq.getTransactionId())
                 .orElseThrow(() -> {
-                    sendLog("Transaction not found", MsgType.RESPONSE, LocalDateTime.now());
                    return new BadRequestException("Transaction not found");
                 });
 
 
         if (transaction.getStatus() != TransactionStatus.INITIATED){
             String errorMsg = "Transaction already Executed.";
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new BadRequestException(errorMsg);
+             throw new BadRequestException(errorMsg);
         }
 
 
@@ -108,8 +85,7 @@ public class TransactionService {
             transaction.setStatus(TransactionStatus.FAILED);
             transactionDao.saveAndFlush(transaction);
             String errorMsg = "Invalid 'from' or 'to' account ID.";
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new BadRequestException(errorMsg);
+             throw new BadRequestException(errorMsg);
         }
 
         transaction.setStatus(TransactionStatus.SUCCESS);
@@ -128,8 +104,7 @@ public class TransactionService {
                     AccountDetail.class);
         }catch (HttpClientErrorException ex){
             String errorMsg = "Invalid account ID.";
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new BadRequestException(errorMsg);
+             throw new BadRequestException(errorMsg);
         }
 
         List<TransactionDetail> transactionsList = new ArrayList<>();
@@ -165,8 +140,7 @@ public class TransactionService {
 
         if(transactionsList.isEmpty()){
             String errorMsg = "No transactions found for account ID "+ accountId;
-            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new NotFoundException(errorMsg);
+             throw new NotFoundException(errorMsg);
 
         }else {
             transactionsList.sort(Comparator.comparing(TransactionDetail::getTimestamp));

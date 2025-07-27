@@ -4,6 +4,7 @@ package com.microservice.user.service.controllers;
 import com.microservice.user.service.dtos.*;
 import com.microservice.user.service.enums.MsgType;
 import com.microservice.user.service.models.Users;
+import com.microservice.user.service.services.LoggingService;
 import com.microservice.user.service.services.UserService;
 import jakarta.validation.Valid;
 import org.mindrot.jbcrypt.BCrypt;
@@ -25,6 +26,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private LoggingService loggingService;
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<UserResponse> registerNewUser(
@@ -33,11 +36,11 @@ public class UserController {
         UserRegistration logUser = new UserRegistration(user.getUsername(),
                 BCrypt.hashpw(user.getPassword(),BCrypt.gensalt(12)),
                 user.getEmail(), user.getFirstName(), user.getLastName());
-        userService.sendLog(logUser, MsgType.REQUEST, LocalDateTime.now());
+        loggingService.sendLog(logUser, MsgType.REQUEST, LocalDateTime.now());
 
         UserResponse savedUser = userService.registerNewUser(user);
 
-        userService.sendLog(savedUser, MsgType.RESPONSE, LocalDateTime.now());
+        loggingService.sendLog(savedUser, MsgType.RESPONSE, LocalDateTime.now());
         return new ResponseEntity<UserResponse>(savedUser, HttpStatus.CREATED);
     }
 
@@ -46,11 +49,11 @@ public class UserController {
 
         UserLogin logUser = new UserLogin(credentials.getUsername(),
                 BCrypt.hashpw(credentials.getPassword(),BCrypt.gensalt(12)));
-        userService.sendLog(logUser, MsgType.REQUEST, LocalDateTime.now());
+        loggingService.sendLog(logUser, MsgType.REQUEST, LocalDateTime.now());
 
         LoginResponse loggedUser = userService.login(credentials);
 
-        userService.sendLog(loggedUser, MsgType.RESPONSE, LocalDateTime.now());
+        loggingService.sendLog(loggedUser, MsgType.RESPONSE, LocalDateTime.now());
         return new ResponseEntity<LoginResponse>(loggedUser, HttpStatus.OK);
     }
 
@@ -58,11 +61,11 @@ public class UserController {
     public ResponseEntity<UserProfile> getProfile(@PathVariable("userId")UUID id){
 
         Map<String,UUID> logId =Map.of("userId", id);
-        userService.sendLog(logId, MsgType.REQUEST, LocalDateTime.now());
+        loggingService.sendLog(logId, MsgType.REQUEST, LocalDateTime.now());
 
         UserProfile user = userService.getProfile(id);
 
-        userService.sendLog(user, MsgType.RESPONSE, LocalDateTime.now());
+        loggingService.sendLog(user, MsgType.RESPONSE, LocalDateTime.now());
         return new ResponseEntity<UserProfile>(user, HttpStatus.OK);
     }
 }
