@@ -86,7 +86,7 @@ public class UserService {
         //check if user exists
         if ((!username.isEmpty() && !userDao.existsByUsername(username))) {
             sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
-            throw new InvalidUsernameOrPassword("Invalid username or password.");
+            throw new UserNotFound("Invalid username or password.");
         }
 
         Users userLogged = userDao.findByUsername(username);

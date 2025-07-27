@@ -90,15 +90,14 @@ public class TransactionService {
                    return new BadRequestException("Transaction not found");
                 });
 
-<<<<<<< Updated upstream
-=======
+
         if (transaction.getStatus() != TransactionStatus.INITIATED){
             String errorMsg = "Transaction already Executed.";
             sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
             throw new BadRequestException(errorMsg);
         }
 
->>>>>>> Stashed changes
+
         TransactionInternalRequest transactionInternalRequest= new TransactionInternalRequest(
                 transaction.getFromAccountId(), transaction.getToAccountId(),
                 transaction.getAmount());
