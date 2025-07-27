@@ -62,7 +62,9 @@ public class UserService {
 
         if (userDao.existsByUsername(newUser.getUsername()) ||
                 userDao.existsByEmail(newUser.getEmail())){
-            throw new UserAlreadyExistsException("Username or email already exists.");
+            String errorMsg = "Username or email already exists.";
+            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
+            throw new UserAlreadyExistsException(errorMsg);
         }
 
         String hashedPassword=BCrypt.hashpw(newUser.getPasswordHash(),BCrypt.gensalt(12));
@@ -79,8 +81,11 @@ public class UserService {
         String username = credentials.getUsername();
         String password = credentials.getPassword();
 
+        String errorMsg = "Invalid username or password.";
+
         //check if user exists
         if ((!username.isEmpty() && !userDao.existsByUsername(username))) {
+            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
             throw new InvalidUsernameOrPassword("Invalid username or password.");
         }
 
@@ -91,14 +96,17 @@ public class UserService {
             return new LoginResponse(userLogged.getId(), userLogged.getUsername());
         }
         else {
-            throw new InvalidUsernameOrPassword("Invalid username or password.");
+            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
+            throw new InvalidUsernameOrPassword(errorMsg);
         }
     }
 
     @Transactional
     public UserProfile getProfile(UUID id){
         if(!userDao.existsById(id)){
-            throw new UserNotFound("User with ID "+ id + " not found.");
+            String errorMsg = "User with ID "+ id + " not found.";
+            sendLog(errorMsg, MsgType.RESPONSE, LocalDateTime.now());
+            throw new UserNotFound(errorMsg);
         }
         Users user = userDao.findById(id).get();
         return new UserProfile(user.getId(),user.getUsername(), user.getEmail(),

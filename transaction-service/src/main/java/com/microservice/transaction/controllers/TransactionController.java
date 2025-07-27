@@ -52,7 +52,8 @@ public class TransactionController {
     @RequestMapping(method = RequestMethod.GET, value = "/accounts/{accountId}/transactions")
     public List<TransactionDetail> getAccountTransactions(@PathVariable("accountId")
                                                           UUID accountId){
-        transactionService.sendLog(accountId, MsgType.REQUEST, LocalDateTime.now());
+        Map<String,UUID> logId =Map.of("accountId", accountId);
+        transactionService.sendLog(logId, MsgType.REQUEST, LocalDateTime.now());
 
         List<TransactionDetail> resList = transactionService.getAccountTransactions(accountId);
 

@@ -6,6 +6,7 @@ import com.microservice.user.service.enums.MsgType;
 import com.microservice.user.service.models.Users;
 import com.microservice.user.service.services.UserService;
 import jakarta.validation.Valid;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,10 @@ public class UserController {
     public ResponseEntity<UserResponse> registerNewUser(
             @Validated @RequestBody UserRegistration user) {
 
-        userService.sendLog(user, MsgType.REQUEST, LocalDateTime.now());
+        UserRegistration logUser = new UserRegistration(user.getUsername(),
+                BCrypt.hashpw(user.getPassword(),BCrypt.gensalt(12)),
+                user.getEmail(), user.getFirstName(), user.getLastName());
+        userService.sendLog(logUser, MsgType.REQUEST, LocalDateTime.now());
 
         UserResponse savedUser = userService.registerNewUser(user);
 
@@ -40,7 +44,9 @@ public class UserController {
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ResponseEntity<LoginResponse> login(@Validated @RequestBody UserLogin credentials) {
 
-        userService.sendLog(credentials, MsgType.REQUEST, LocalDateTime.now());
+        UserLogin logUser = new UserLogin(credentials.getUsername(),
+                BCrypt.hashpw(credentials.getPassword(),BCrypt.gensalt(12)));
+        userService.sendLog(logUser, MsgType.REQUEST, LocalDateTime.now());
 
         LoginResponse loggedUser = userService.login(credentials);
 
@@ -51,7 +57,8 @@ public class UserController {
     @RequestMapping(value = "/{userId}/profile", method = RequestMethod.GET)
     public ResponseEntity<UserProfile> getProfile(@PathVariable("userId")UUID id){
 
-        userService.sendLog(id, MsgType.REQUEST, LocalDateTime.now());
+        Map<String,UUID> logId =Map.of("userId", id);
+        userService.sendLog(logId, MsgType.REQUEST, LocalDateTime.now());
 
         UserProfile user = userService.getProfile(id);
 
