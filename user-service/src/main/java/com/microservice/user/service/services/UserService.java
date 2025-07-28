@@ -1,12 +1,9 @@
 package com.microservice.user.service.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microservice.user.service.constant.AppConst;
+
 import com.microservice.user.service.dao.UserDao;
 
 import com.microservice.user.service.dtos.*;
-import com.microservice.user.service.enums.MsgType;
 import com.microservice.user.service.exceptions.InvalidUsernameOrPassword;
 import com.microservice.user.service.exceptions.UserAlreadyExistsException;
 import com.microservice.user.service.exceptions.UserNotFound;
@@ -14,13 +11,8 @@ import com.microservice.user.service.models.Users;
 import jakarta.transaction.Transactional;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,6 +20,14 @@ public class UserService {
 
     @Autowired
     private UserDao userDao;
+
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    private static boolean isValidEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return email.matches(EMAIL_REGEX);
+    }
 
     private Users mapUserRegistrationToUserObj(UserRegistration userData) {
         Users user = new Users();
@@ -41,6 +41,10 @@ public class UserService {
 
     @Transactional
     public UserResponse registerNewUser(UserRegistration user){
+        if (!isValidEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Invalid email format.");
+        }
+
         Users newUser = mapUserRegistrationToUserObj(user);
 
         if (userDao.existsByUsername(newUser.getUsername()) ||
@@ -67,7 +71,7 @@ public class UserService {
 
         //check if user exists
         if ((!username.isEmpty() && !userDao.existsByUsername(username))) {
-             throw new UserNotFound("Invalid username or password.");
+             throw new InvalidUsernameOrPassword("Invalid username or password.");
         }
 
         Users userLogged = userDao.findByUsername(username);

@@ -30,7 +30,10 @@ public class TransactionController {
 
     @RequestMapping(method = RequestMethod.POST, value = "/transactions/transfer/initiation")
     public TransferResponse initiateTransaction(
-            @Valid @RequestBody TransferRequestInitiation transferReq) {
+            @Valid @RequestBody TransferRequestInitiation transferReq,
+            @RequestHeader(value = "APP-NAME", required = false) String appName) {
+        //testing WSO2 header
+        System.out.println("app name header is "+appName);
 
         loggingService.sendLog(transferReq, MsgType.REQUEST, LocalDateTime.now());
 
