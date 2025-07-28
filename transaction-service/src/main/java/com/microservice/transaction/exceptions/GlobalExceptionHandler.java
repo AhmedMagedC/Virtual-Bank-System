@@ -40,29 +40,47 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage()));
-        loggingService.sendLog(errors, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body(errors);  // → returns 400
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                errors.toString(), // or use a utility to format this better
+                "Validation Failed"
+        );
+
+        loggingService.sendLog(errorResponse, MsgType.RESPONSE, LocalDateTime.now());
+        return errorResponse;
     }
 
     @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<?> handleNpe(NullPointerException ex) {
-        ErrorResponse error = new ErrorResponse(404,
-                "Required field was null: " + ex.getMessage(), "Bad Request");
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handleNpe(NullPointerException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Required field was null: " + ex.getMessage(),
+                "Null Pointer"
+        );
         loggingService.sendLog(error, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body(ex.getMessage());
+        return error;
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleValidationErrors( IllegalArgumentException ex) {
-        ErrorResponse error = new ErrorResponse(404,
-                ex.getMessage(), "Bad Request");
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                "Bad Request"
+        );
         loggingService.sendLog(error, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body(ex.getMessage());
+        return error;
     }
+
 
 
 }

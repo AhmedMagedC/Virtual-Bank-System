@@ -32,7 +32,7 @@ public class UserController {
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<UserResponse> registerNewUser(
             @Validated @RequestBody UserRegistration user,
-            @RequestHeader("APP-NAME") String appName) {
+            @RequestHeader(value = "APP-NAME", required = false) String appName) {
         //testing WSO2 header
         System.out.println("app name header is "+appName);
 
@@ -49,7 +49,7 @@ public class UserController {
 
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ResponseEntity<LoginResponse> login(@Validated @RequestBody UserLogin credentials
-            , @RequestHeader("APP-NAME") String appName) {
+            , @RequestHeader(value = "APP-NAME", required = false) String appName ) {
         //testing WSO2 header
         System.out.println("app name header is "+appName);
 

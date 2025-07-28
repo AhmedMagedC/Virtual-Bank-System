@@ -32,7 +32,7 @@ public class TransactionController {
     @RequestMapping(method = RequestMethod.POST, value = "/transactions/transfer/initiation")
     public TransferResponse initiateTransaction(
             @Valid @RequestBody TransferRequestInitiation transferReq,
-            @RequestHeader("APP-NAME") String appName) {
+            @RequestHeader(value = "APP-NAME", required = false) String appName) {
         //testing WSO2 header
         System.out.println("app name header is "+appName);
 

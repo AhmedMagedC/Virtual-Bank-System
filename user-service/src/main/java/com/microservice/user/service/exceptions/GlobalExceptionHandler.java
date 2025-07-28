@@ -50,36 +50,56 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handleValidationErrors(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
-        errors.put(error.getField(), error.getDefaultMessage()));
+                fieldErrors.put(error.getField(), error.getDefaultMessage())
+        );
 
-        loggingService.sendLog(errors, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body(errors);  // → returns 400
+        String combinedErrors = fieldErrors.toString(); // Optional: format as string
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                combinedErrors,
+                "Validation Failed"
+        );
+        loggingService.sendLog(error, MsgType.RESPONSE, LocalDateTime.now());
+        return error;
     }
 
     @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<?> handleNpe(NullPointerException ex) {
-        ErrorResponse error = new ErrorResponse(404,
-                "Required field was null: " + ex.getMessage(), "Bad Request");
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handleNpe(NullPointerException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Required field was null: " + ex.getMessage(),
+                "Null Pointer"
+        );
         loggingService.sendLog(error, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body("Required field was null: " + ex.getMessage());
+        return error;
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleValidationErrors( IllegalArgumentException ex) {
-        ErrorResponse error = new ErrorResponse(404,
-                 ex.getMessage(), "Bad Request");
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handleIllegalArgument(IllegalArgumentException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                "Bad Request"
+        );
         loggingService.sendLog(error, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body(ex.getMessage());  // → returns 400
+        return error;
     }
 
     @ExceptionHandler(PropertyValueException.class)
-    public ResponseEntity<?> handleValidationErrors( PropertyValueException ex) {
-        ErrorResponse error = new ErrorResponse(404,
-                 ex.getMessage(), "Bad Request");
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ErrorResponse handlePropertyValue(PropertyValueException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                "Bad Request"
+        );
         loggingService.sendLog(error, MsgType.RESPONSE, LocalDateTime.now());
-        return ResponseEntity.badRequest().body(ex.getMessage());  // → returns 400
+        return error;
     }
 }
