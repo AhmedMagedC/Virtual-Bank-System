@@ -1,0 +1,16 @@
+# Ignore Maven/Gradle build output
+target/
+build/
+
+# Ignore local environment files
+.env
+*.iml
+.idea/
+
+# Ignore OS & editor specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Git
+.git
+.gitignore
