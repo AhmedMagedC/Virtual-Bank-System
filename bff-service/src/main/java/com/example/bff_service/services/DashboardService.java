@@ -96,28 +96,37 @@ public class DashboardService {
 
     private Mono<List<AccountWithTransactions>> getAccountsWithTransactions(Flux<AccountDetails> accountDetailsFlux) {
         return accountDetailsFlux
-                .flatMap(account -> transactionServiceClient
-                        .get()
-                        .uri("/accounts/{accountId}/transactions", account.accountId())
-                        .retrieve()
-                        .onStatus(HttpStatus.NOT_FOUND::equals,
-                                response -> Mono.empty())
-                        .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, client -> Mono.error(new DownstreamServiceException("Transaction Service failed")))
-                        .bodyToFlux(TransactionDetails.class)
-                        .filter(txn -> txn.getTransactionId() != null)
-                        .collectList()
-                        .onErrorResume(WebClientResponseException.NotFound.class, ex -> Mono.just(List.of()))
-                        .map(transactions -> {
-                            AccountWithTransactions awt = new AccountWithTransactions();
-                            awt.setAccountId(account.accountId());
-                            awt.setAccountNumber(account.accountNumber());
-                            awt.setAccountType(account.accountType());
-                            awt.setAccountStatus(account.accountStatus());
-                            awt.setBalance(account.balance());
-                            awt.setTransactions(transactions);
-                            return awt;
-                        }))
-                .collectList();
+                .filter(account -> account.accountId() != null)
+                .flatMap(account ->
+                        transactionServiceClient
+                                .get()
+                                .uri("/accounts/{accountId}/transactions", account.accountId())
+                                .retrieve()
+                                .onStatus(
+                                        status -> status == HttpStatus.NOT_FOUND || status == HttpStatus.BAD_REQUEST,
+                                        response -> Mono.empty() // Skip if no transactions
+                                )
+                                .onStatus(
+                                        HttpStatus.INTERNAL_SERVER_ERROR::equals,
+                                        response -> Mono.error(new DownstreamServiceException("Transaction Service failed"))
+                                )
+                                .bodyToFlux(TransactionDetails.class)
+                                .filter(txn -> txn.getTransactionId() != null)
+                                .collectList()
+                                .defaultIfEmpty(List.of()) // Ensure empty list if no transactions
+                                .map(transactions -> {
+                                    AccountWithTransactions awt = new AccountWithTransactions();
+                                    awt.setAccountId(account.accountId());
+                                    awt.setAccountNumber(account.accountNumber());
+                                    awt.setAccountType(account.accountType());
+                                    awt.setAccountStatus(account.accountStatus());
+                                    awt.setBalance(account.balance());
+                                    awt.setTransactions(transactions);
+                                    return awt;
+                                })
+                )
+                .collectList()
+                .defaultIfEmpty(List.of()); // Return empty list if no accounts
     }
 
     public void sendLog(Object msg , MsgType type, LocalDateTime date){
