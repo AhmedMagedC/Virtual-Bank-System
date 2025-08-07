@@ -271,6 +271,10 @@ POST /register
 
 "email": "john@example.com"
 
+"firstName" : "john",
+
+"lastName" : "Doe"
+
 }
 
 ```
