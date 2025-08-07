@@ -69,7 +69,7 @@ Each domain (Users, Accounts, Transactions, Logging) is isolated and independent
 
   
 
-### 🪵 4. Kafka-Based Logging Microservice
+### 📬 4. Kafka-Based Logging Microservice
 
 - Produces request/response logs from each service
 
